@@ -9,8 +9,9 @@
 // import * as d3 from 'd3';
 // require("./stylesheet.css");
 
-$("#inputfile").change(function () {
-  $("#inputfile").attr("hidden", true);
+d3.select("#inputfile").on("change", getCsv);
+function getCsv() {
+  d3.select("#inputfile").attr("hidden", true);
   var r = new FileReader();
   r.readAsText(this.files[0], config.encoding);
   r.onload = function () {
@@ -22,7 +23,7 @@ $("#inputfile").change(function () {
       alert(error);
     }
   };
-});
+};
 
 function draw(data) {
   var date = [];
@@ -54,13 +55,22 @@ function draw(data) {
     });
   var baseTime = 3000;
 
+  // 如果用户提供的color_palette 长度不为0 则使用它，否则使用d3.schemeCatetory10
+  var user_pallete = config.color_palette;
+  var product_palette = user_pallete.length !== 0 ? user_pallete : d3.schemeCategory10;
   // 选择颜色
   function getColor(d) {
     var r = 0.0;
     if (changeable_color) {
-      var colorRange = d3.interpolateCubehelix(config.color_range[0], config.color_range[1]);
+      var colorRange = d3.interpolateCubehelix(
+        config.color_range[0],
+        config.color_range[1]
+      );
       if (divide_changeable_color_by_type && d["type"] in config.color_ranges) {
-        var colorRange = d3.interpolateCubehelix(config.color_ranges[d["type"]][0], config.color_ranges[d["type"]][1]);
+        var colorRange = d3.interpolateCubehelix(
+          config.color_ranges[d["type"]][0],
+          config.color_ranges[d["type"]][1]
+        );
       }
       var v =
         Math.abs(rate[d.name] - rate["MIN_RATE"]) /
@@ -74,8 +84,8 @@ function draw(data) {
     if (d[divide_color_by] in config.color)
       return config.color[d[divide_color_by]];
     else {
-      return d3.schemeCategory10[
-        Math.floor(d[divide_color_by].charCodeAt() % 10)
+      return product_palette[
+        Math.floor(d[divide_color_by].charCodeAt() % product_palette.length)
       ];
     }
   }
@@ -116,6 +126,7 @@ function draw(data) {
   var animation = config.animation;
   var deformat = config.deformat;
   config.imgs = Object.assign(config.imgs, external_imgs);
+  config.color = Object.assign(config.color, external_colors);
 
   const margin = {
     left: left_margin,
@@ -178,7 +189,7 @@ function draw(data) {
       if (d <= 0) {
         return "";
       }
-      return d;
+      return d3.format(",.0f")(d);
     })
     .tickSize(-innerHeight);
 
@@ -291,8 +302,10 @@ function draw(data) {
         rate["MIN_RATE"] = rate[e.name];
       }
     });
-    currentData = currentData.slice(0, max_number);
+
+    // sort and pick the top max_number data
     dataSort();
+    currentData = currentData.slice(0, max_number);
 
     d3.transition("2")
       .each(redraw)
@@ -457,37 +470,6 @@ function draw(data) {
         return "translate(0," + yScale(yValue(d)) + ")";
       });
 
-    if (config.use_img) {
-      barEnter
-        .append("defs")
-        .append("pattern")
-        .attr("id", d => d.name)
-        .attr("width", "100%")
-        .attr("height", "100%")
-        .append("image")
-        .attr("x", "0")
-        .attr("y", "0")
-        .attr("width", "40")
-        .attr("height", "40")
-        .attr("href", d => config.imgs[d.name]);
-
-      barEnter
-        .append("circle")
-        .attr("fill-opacity", 0)
-        .attr("cy", 63)
-        .attr('fill', d => "url(#" + encodeURIComponent(d.name).replace("'", "%27").replace("(", "%28").replace(")", "%29") + ")")
-        .attr("stroke-width", "0px")
-        .transition("a")
-        .delay(500 * interval_time)
-        .duration(2490 * interval_time)
-        .attr("stroke", d => getColor(d))
-        .attr("stroke-width", "4px")
-        .attr("x", -16)
-        .attr("cx", -22)
-        .attr("cy", 13)
-        .attr("r", 40 / 2)
-        .attr("fill-opacity", 1);
-    }
     barEnter
       .append("rect")
       .attr("width", function (d) {
@@ -536,6 +518,46 @@ function draw(data) {
         });
     }
 
+    if (config.use_img) {
+      barEnter
+        .append("defs")
+        .append("pattern")
+        .attr("id", d => d.name)
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .append("image")
+        .attr("x", "0")
+        .attr("y", "0")
+        .attr("width", "40")
+        .attr("height", "40")
+        .attr("href", d => config.imgs[d.name]);
+
+      barEnter
+        .append("circle")
+        .attr("fill-opacity", 0)
+        .attr("cy", 63)
+        .attr(
+          "fill",
+          d =>
+            "url(#" +
+            encodeURIComponent(d.name)
+              .replace("'", "%27")
+              .replace("(", "%28")
+              .replace(")", "%29") +
+            ")"
+        )
+        .attr("stroke-width", "0px")
+        .transition("a")
+        .delay(500 * interval_time)
+        .duration(2490 * interval_time)
+        // .attr("stroke", d => getColor(d))
+        // .attr("paint-order", "stroke")
+        .attr("x", -16)
+        .attr("cx", d => xScale(xValue(d)) - 20)
+        .attr("cy", 13)
+        .attr("r", 40 / 2)
+        .attr("fill-opacity", 1);
+    }
     // bar上文字
     var barInfo = barEnter
       .append("text")
@@ -565,10 +587,10 @@ function draw(data) {
       })
       .attr("x", d => {
         if (long) return 10;
-        return xScale(xValue(d)) - 10;
+        return xScale(xValue(d)) - 40;
       })
       .attr("fill-opacity", function (d) {
-        if (xScale(xValue(d)) - 10 < display_barInfo) {
+        if (xScale(xValue(d)) - 40 < display_barInfo) {
           return 0;
         }
         return 1;
@@ -580,11 +602,12 @@ function draw(data) {
         return "end";
       })
       .attr("stroke-width", function (d) {
-        if (xScale(xValue(d)) - 10 < display_barInfo) {
+        if (xScale(xValue(d)) - 40 < display_barInfo) {
           return "0px";
         }
-        return "1px";
-      });
+        return "4px";
+      })
+      .attr("paint-order", "stroke");
     if (long) {
       barInfo.tween("text", function (d) {
         var self = this;
@@ -629,9 +652,9 @@ function draw(data) {
             round = prec.length > 1 ? Math.pow(10, prec[1].length) : 1;
           // d.value = self.textContent
           return function (t) {
-            self.textContent = d3.format(format)(
-              Math.round(i(t) * round) / round
-            ) + config.postfix;
+            self.textContent =
+              d3.format(format)(Math.round(i(t) * round) / round) +
+              config.postfix;
             // d.value = self.textContent
           };
         })
@@ -663,6 +686,7 @@ function draw(data) {
         .style("fill", d => getColor(d))
         .attr("width", d => xScale(xValue(d)));
     }
+
     if (!long) {
       barUpdate
         .select(".value")
@@ -677,9 +701,12 @@ function draw(data) {
     });
 
     if (config.use_img) {
-      barUpdate.select("circle").attr("stroke", function (d) {
-        return getColor(d);
-      });
+      barUpdate
+        .select("circle")
+        .attr("stroke", function (d) {
+          return getColor(d);
+        })
+        .attr("cx", d => xScale(xValue(d)) - 20);
     }
 
     var barInfo = barUpdate
@@ -692,20 +719,21 @@ function draw(data) {
       })
       .attr("x", d => {
         if (long) return 10;
-        return xScale(xValue(d)) - 10;
+        return xScale(xValue(d)) - 40;
       })
       .attr("fill-opacity", function (d) {
-        if (xScale(xValue(d)) - 10 < display_barInfo) {
+        if (xScale(xValue(d)) - 40 < display_barInfo) {
           return 0;
         }
         return 1;
       })
       .attr("stroke-width", function (d) {
-        if (xScale(xValue(d)) - 10 < display_barInfo) {
+        if (xScale(xValue(d)) - 40 < display_barInfo) {
           return "0px";
         }
-        return "1px";
-      });
+        return "4px";
+      })
+      .attr("paint-order", "stroke");
 
     if (long) {
       barInfo.tween("text", function (d) {
@@ -713,9 +741,9 @@ function draw(data) {
         var str = d[divide_by] + "-" + d.name + "  数值:";
 
         var i = d3.interpolate(
-            self.textContent.slice(str.length, 99),
-            Number(d.value)
-          ),
+          self.textContent.slice(str.length, 99),
+          Number(d.value)
+        ),
           prec = (Number(d.value) + "").split("."),
           round = prec.length > 1 ? Math.pow(10, prec[1].length) : 1;
         return function (t) {
@@ -738,18 +766,24 @@ function draw(data) {
           if (config.postfix == "") {
             var i = d3.interpolate(self.textContent, Number(d.value));
           } else {
-            var i = d3.interpolate(self.textContent.slice(0, -config.postfix.length), Number(d.value));
+            var i = d3.interpolate(
+              self.textContent.slice(0, -config.postfix.length),
+              Number(d.value)
+            );
           }
 
-          var i = d3.interpolate(deformat(self.textContent, config.postfix), Number(d.value))
+          var i = d3.interpolate(
+            deformat(self.textContent, config.postfix),
+            Number(d.value)
+          );
 
           var prec = (Number(d.value) + "").split("."),
             round = prec.length > 1 ? Math.pow(10, prec[1].length) : 1;
           // d.value = self.textContent
           return function (t) {
-            self.textContent = d3.format(format)(
-              Math.round(i(t) * round) / round
-            ) + config.postfix;
+            self.textContent =
+              d3.format(format)(Math.round(i(t) * round) / round) +
+              config.postfix;
             // d.value = self.textContent
           };
         })
@@ -783,8 +817,8 @@ function draw(data) {
       .attr("fill-opacity", 0)
       .attr("width", () => {
         if (always_up) return xScale(0);
-        return xScale(currentData[currentData.length - 1]["value"])
-      })
+        return xScale(currentData[currentData.length - 1]["value"]);
+      });
     if (!long) {
       barExit
         .select(".value")
@@ -807,7 +841,7 @@ function draw(data) {
       });
     barExit.select(".label").attr("fill-opacity", 0);
     if (config.use_img) {
-      barExit.select("circle").attr("fill-opacity", 0)
+      barExit.select("circle").attr("fill-opacity", 0);
     }
   }
 

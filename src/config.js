@@ -30,16 +30,20 @@
   reverse: false,
 
   // 类型根据什么字段区分？如果是name，则关闭类型显示
-  divide_by: 'type',
+  divide_by: "type",
 
   // 颜色根据什么字段区分？
-  divide_color_by: 'name',
+  divide_color_by: "name",
 
   // 字段的值与其对应的颜色值
+  // 也可在src/colors.js 中设置
   color: {
-    "Chinese": "#1177CC",
-    "Japanese": "#667788"
+    Chinese: "#1177CC",
+    Japanese: "#667788"
   },
+
+  // 指定一组颜色值，用于自定义所有bar 的配色方案。如果为空则使用默认配置。
+  color_palette: [],
 
   // 颜色渐变：颜色绑定增长率
   changeable_color: false,
@@ -49,8 +53,7 @@
   // 如果该项为true，那么按照src/color_ranges.js中的color_ranges变色，默认色板为color_range
   // 一个具体的设置模板见src/_color_ranges.js，将其更名为color_ranges.js再设置即可
   divide_changeable_color_by_type: false,
-  color_range: ['#ff7e5f', '#feb47b'],
-
+  color_range: ["#ff7e5f", "#feb47b"],
 
   // 附加信息内容。
   // left label
@@ -58,7 +61,6 @@
 
   // right label
   typeLabel: "右侧文字",
-
 
   // 榜首项目信息的水平位置 。
   // Top item information horizontal location
@@ -144,7 +146,7 @@
 
   // 开启匀速动画效果
   // animation:'linear',
-  showLabel: false,
+  showLabel: true,
 
   // label x轴位置
   labelx: -10,
@@ -154,8 +156,11 @@
   // 图片路径，本地图片或者网上图片。
   // 也可在imgs.js中配置。
   imgs: {
-    "条目": "http://i1.hdslb.com/bfs/face/983034448f81f45f05956d0455a86fe0639d6a36.jpg",
-    "任意名称": "path/to/img"
+    item:
+      "http://i1.hdslb.com/bfs/face/983034448f81f45f05956d0455a86fe0639d6a36.jpg",
+    条目:
+      "http://i1.hdslb.com/bfs/face/983034448f81f45f05956d0455a86fe0639d6a36.jpg",
+    任意名称: "path/to/img"
   },
 
   // 全局背景颜色

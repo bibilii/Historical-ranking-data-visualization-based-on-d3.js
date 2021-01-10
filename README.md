@@ -1,11 +1,20 @@
+# 该项目暂停维护
+
+这个项目存在很多历史遗留问题，使用起来也不是非常便利。因此我开了一个新坑，旨在能够更好地制作此类数据可视化视频。
+
+新项目地址：
+
+[anichart.js](https://github.com/Jannchie/anichart.js): https://github.com/Jannchie/anichart.js
+
+个人精力有限，此项目基本上不会更新代码了。此项目的代码仍能使用，如果出现问题，也可以发邮件到jannchie@gmail.com，我会予以修复。
+
+---
+
 <h1 align="center">
 动态排名数据可视化
 </h1>
 
 <h3 align="center">将历史数据排名转化为动态柱状图图表</h3>
-
-
-  
 
 <p align="center">
   <a href="readme-en.md">English</a>
@@ -66,6 +75,11 @@
 ---
 
 # 更新日志
+
+## 2020-03-01
+
+- 美化了图片的位置
+- 美化了描边
 
 ## 2019-04-16
 
@@ -177,5 +191,4 @@
 - 现在能够在配置文件中选择自定义颜色了。
 - 使用更加合理的随机颜色。
 - speed属性更名为interval_time。
-
 
